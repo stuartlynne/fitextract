@@ -7,8 +7,7 @@ import csv
 import argparse
 import itertools
 
-from fit_tool.data_message import DataMessage
-from fit_tool.fit_file import FitFile
+from fitparse import FitFile
 
 # extract fields in fields_arg from message_name messages, dump to csv file
 # pathname - fit file to extract from
@@ -24,24 +23,22 @@ def extract(pathname, message_name, fields_arg):
     with open(fout_name, 'w', newline='') as fout:
         csvwriter = csv.DictWriter(fout, fieldnames=fieldnames, extrasaction='ignore') 
         csvwriter.writeheader()
-        fit_file = FitFile.from_file(pathname)
-        for i, record in enumerate(fit_file.records):
-            if isinstance(record.message, DataMessage):
-                if record.message.NAME == message_name:
-                    print('.', file=sys.stderr, end='')
-                    values = { f: [] for f in fieldnames } 
-                    for f in itertools.chain(record.message.fields, record.message.developer_fields):
-                        if f.name in fieldnames:
-                            try:
-                                for v in f.get_values():
-                                    values[f.name].append(v)
-                            except KeyError:
-                                values[f.name].append(f.get_value())
+        fit_file = FitFile(pathname)
+        for i, message in enumerate(fit_file.get_messages(message_name)):
+                print('.', file=sys.stderr, end='')
+                values = { f: [] for f in fieldnames } 
+                for field in message:
+                    if field.name in fieldnames:
+                        try:
+                            for v in field.value:
+                                values[field.name].append(v)
+                        except TypeError:
+                            values[field.name].append(field.value)
 
-                    for j in range(max([len(values[k]) if k in values else 0 for k in values])):
-                        row = {k: values[k][j] if len(values[k]) > j else '' for k in values}
-                        if csvwriter:
-                            csvwriter.writerow(row)
+                for j in range(max([len(values[k]) if k in values else 0 for k in values])):
+                    row = {k: values[k][j] if len(values[k]) > j else '' for k in values}
+                    if csvwriter:
+                        csvwriter.writerow(row)
     print('', file=sys.stderr)
 
 def main():
