@@ -2,6 +2,8 @@
 # vim: shiftwidth=4 tabstop=4 expandtab textwidth=0
 # Copyright (c) 2023 stuart.lynne@gmail.com
 
+__version__ = "0.1.0"
+
 import os
 import sys
 import csv
@@ -274,12 +276,19 @@ def main():
     parser.add_argument('--expand', help='Expand arrays to multiple rows', action='store_true')
     parser.add_argument('--timestamp', help='Do not add Timestamp if time available', action='store_true')
     parser.add_argument('--no-datestamp', help='Do not Add Datestamp if time available', action='store_true')
-    parser.add_argument('-V', '--verbose', help='Extra Debug on stderr', action='store_true')
-    parser.add_argument('fitfile', nargs=1,  type=str, help='FIT File')
+    parser.add_argument('-v', '--verbose', help='Extra Debug on stderr', action='store_true')
+    parser.add_argument('-V', '--version', help='Version', action='store_true')
+    parser.add_argument('fitfile', nargs='*',  type=str, help='FIT File')
     args = parser.parse_args()
     print('main: args: %s' % (args), file=sys.stderr)
+    if args.version:
+        print(f"fitextract {__version__}", file=sys.stderr)
+
 
     # iterate across files to extract from, extract hrv and record messages separately
+    if args.fitfile is None:
+        return
+
     for p in args.fitfile:
 
         device_info_dict, messages = get_messages(p, )
